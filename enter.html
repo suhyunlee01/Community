@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Enter</title>
+    <link rel="stylesheet" href="stylin.css">
+  </head>
+
+  <body>
+    <div class="container">
+        <!-- 양식을 전송할 HTTP 메서드 = post-->
+        <!-- 양식이 제출될 때 데이터가 전송될 URL = /save -->
+        <form method="post" action="/save" class="myForm">
+            <div class="inputdiv">
+                <h1>게시판</h1>
+                <label>제목</label>
+                <input class="InputTitle" type="text" name="title"/>
+            </div><br>
+            <div class="txtdiv">
+                <label>내용</label>
+                <textarea class="InputTXT" name="content" rows="10"></textarea>
+            </div><br>
+            <!-- form 내부에 입력된 데이터들을 서버로 submit하기 -->
+            <button class="btnSave" type="submit">저장</button>
+        </form>
+    </div>
+  </body>
+</html>

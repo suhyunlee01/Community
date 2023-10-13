@@ -1,0 +1,30 @@
+.container{
+    padding-left: 100px;
+    padding-right: 100px;
+}
+.myForm{
+    display: flex;
+    flex-direction: column;
+}
+.InputTitle{
+    width: 300px;
+}
+.InputTXT{
+    width: 300px;
+}
+.btnSave{
+    width: 300px;
+    height: 30px;
+    border: none;
+    background-color: rgb(125, 125, 255);
+    border-radius: 4px;
+    color: white;
+}
+.inputdiv{
+    display: flex;
+    flex-direction: column;
+}
+.txtdiv{
+    display: flex;
+    flex-direction: column; 
+}
