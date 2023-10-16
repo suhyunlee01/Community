@@ -49,7 +49,7 @@ mongoDBClient.connect(url).then(client => {
 
 //서버 생성
 const express = require('express');
-const { MongoClient } = require('mongodb');
+const { MongoClient, ObjectId } = require('mongodb');
 
 const app = express();
 //style 경로 지정
@@ -60,10 +60,16 @@ const bodyParser = require('body-parser');
 app.use(bodyParser.urlencoded({ extended: true }));
 
 
+//ejs 사용
+app.set('view engine', 'ejs'); 
+// path 모듈을 가져옴
+const path = require('path');
+// views 폴더를 설정했을 경우
+app.set('views', path.join(__dirname, 'views'));
+
 
 
 //라우터 생성
-
 //Get 방식으로 서버에 데이터 전송
 app.get('/', function(req, res){
     res.sendFile(__dirname + '/index.html');
@@ -74,16 +80,22 @@ app.get('/book', function(req, res){
 app.get('/list', function(req, res){
     mydb.collection('post').find().toArray().then(result=>{
         console.log(result);
+        //render(랭더링할 파일, {파일에 저장할 데이터})
+        //
+        res.render('list', {data : result});
     })
+
 })
 
 app.get('/enter', function(req, res){
-    res.sendFile(__dirname + '/enter.html');
+    res.render('enter');
 })
 
-//Post 방식으로 서버에 데이터 전송하기
+//서버로부터 DB로 데이터를 보내는 post //client에서한 post는 클라이언트에서 서버로 데이터를 보내는 post임
 app.post('/save', function(req, res){
-    console.log("저장 완료");
+    console.log(req.body.title);
+    console.log(req.body.content);
+    console.log(req.body.someDate);
 
     // req 매개변수에 있는 클라이언트로부터 받아온 데이터 사용
     // console.log(req.body);
@@ -106,16 +118,32 @@ app.post('/save', function(req, res){
     // })
 
 
-    //MONGO DB 저장
+    //MONGO DB에 클라이언트에서 받아온 데이터(req에 있는 데이터)저장
     mydb.collection('post').insertOne(
-        {
-            title:req.body.title,
-            content: req.body.content
-        }
+            {
+                title:req.body.title,
+                content: req.body.content,
+                date: req.body.someDate
+            }
     ).then(result => {
-        console.log(result);
-        console.log('✨데이터 추가 성공✨');
+            console.log(result);
+            console.log('✨데이터 추가 성공✨');
     })
 
-    res.send('저장');
+    //클라이언트에서 데이터 바인딩
+    res.render('save');
+});
+
+
+// delete할 데이터 id를 클라이언트로부터 받아서
+//DB로 삭제 요청
+app.post('/delete', (req, res) => {
+    console.log(req.body._id);
+
+    req.body._id = new ObjectId(req.body._id);
+    mydb.collection('post').deleteOne(req.body).then(result =>{
+        console.log('삭제완료');
+         //성공 시 status 200을 클라이언트로 보냄
+        res.status(200).send();
+    })
 });
