@@ -145,5 +145,8 @@ app.post('/delete', (req, res) => {
         console.log('삭제완료');
          //성공 시 status 200을 클라이언트로 보냄
         res.status(200).send();
+    }).catch(err=>{
+        console.log(err)
+        res.status(500).send;
     })
 });

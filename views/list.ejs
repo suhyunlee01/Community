@@ -45,7 +45,6 @@
         let sid = e.target.dataset.id;
         //삭제버튼
         let item = $(this);
-
         $.ajax({
           type: 'post',
           url: '/delete',
@@ -56,12 +55,11 @@
           //식제 성공하면 자동으로 새로고침하게 해서 다시 list를 불러와 ui에도 반영하게 함
           location.reload();
           item.parent('td').parent('tr').remove();
-
+          
         }).fail((xhr, textStatusm, errorThrowm) => {
           console.log("fail");
         })
       });
-
     </script>
 
   </body>
