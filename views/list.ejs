@@ -22,7 +22,9 @@
       <tbody>
         <% for(let i = 0; i < data.length; i++){ %>
           <tr>
-            <td><%= data[i].title %></td>
+            <!-- /content/:id 요청 -->
+            <!-- /content/:id 의 파라미터를 _id 값으로 지정 -->
+            <td><a href="/content/<%= data[i]._id %>"><%= data[i].title %></a></td>
             <td><%= data[i].content %></td>
             <td><%= data[i].date %></td>
             <td><button data-id="<%= data[i]._id %>" class="delete btn btn-outline-danger">삭제</button></td>
@@ -30,7 +32,8 @@
         <% } %>
       </tbody>
     </table>
-<!-- 
+    <a href="/enter"><button>글쓰기</button></a>
+    <!-- 
     <% for(let i = 0; i < data.length; i++){ %>
       <h3>제목 : <%= data[i].title %> </h3>
       <p>내용: <%= data[i].content %></p>

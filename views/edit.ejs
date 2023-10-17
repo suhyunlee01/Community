@@ -3,27 +3,30 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Enter</title>
+    <title>Edit</title>
     <link rel="stylesheet" href="stylin.css">
   </head>
 
   <body>
     <div class="container">
         <!-- 양식을 전송할 HTTP 메서드 = post-->
-        <!-- 양식이 제출될 때 데이터가 전송될 URL = /save -->
-        <form method="post" action="/save" class="myForm">
+        <!-- 양식이 제출될 때 데이터가 전송될 URL = /edit -->
+        <form method="post" action="/edit" class="myForm">
+            <!-- _id 데이터 hidden으로 가져오기 -->
+            <input type="hidden" name="id" value="<%= data._id %>"/>
+
             <div class="inputdiv">
-                <h1>게시글 작성하기</h1>
+                <h1>게시글 수정하기</h1>
                 <label>제목</label>
-                <input class="InputTitle" type="text" name="title"/>
+                <input class="InputTitle" type="text" name="title" value="<%- data.title %>"/>
             </div><br>
             <div class="txtdiv">
                 <label>내용</label>
-                <textarea class="InputTXT" name="content" rows="10"></textarea>
+                <textarea class="InputTXT" name="content" rows="10"><%= data.content %></textarea>
             </div><br>
             <div class="txtdiv">
               <label>작성일</label>
-              <input type="date", class="form-control" name="someDate"/>
+              <input type="date" class="form-control" name="someDate" value="<%= data.date %>"/>
             </div>
             <!-- form 내부에 입력된 데이터들을 서버로 submit하기 -->
             <button class="btnSave" type="submit">저장</button>
