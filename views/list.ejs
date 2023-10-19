@@ -9,30 +9,35 @@
   </head>
 
   <body>
-    <h1>게시판 페이지</h1>
-    <table class="table table-hover table-striped text-center container mt-4" style="border: 1px solid">
-      <thead>
-        <tr>
-          <th scope="col">제목</th>
-          <th scope="col">미리보기</th>
-          <th scope="col">날짜</th>
-          <th scope="col">삭제</th>
-        </tr>
-      </thead>
-      <tbody>
-        <% for(let i = 0; i < data.length; i++){ %>
+    <%- include('navbar.html')%>
+    
+    <h1 class="text-center">게시판</h1>
+    <div class="listDiv">
+      <a href="/enter" style="float:left; padding: 0px; display: flex; justify-content: end;" class="container"><button class="btn btn-primary">글쓰기</button></a>
+      <table class="table table-hover table-striped text-center container mt-4" style="border: 1px solid">
+        <thead
+        <thead>
           <tr>
-            <!-- /content/:id 요청 -->
-            <!-- /content/:id 의 파라미터를 _id 값으로 지정 -->
-            <td><a href="/content/<%= data[i]._id %>"><%= data[i].title %></a></td>
-            <td><%= data[i].content %></td>
-            <td><%= data[i].date %></td>
-            <td><button data-id="<%= data[i]._id %>" class="delete btn btn-outline-danger">삭제</button></td>
+            <th scope="col">제목</th>
+            <th scope="col">미리보기</th>
+            <th scope="col">날짜</th>
+            <th scope="col">삭제</th>
           </tr>
-        <% } %>
-      </tbody>
-    </table>
-    <a href="/enter"><button>글쓰기</button></a>
+        </thead>
+        <tbody>
+          <% for(let i = 0; i < data.length; i++){ %>
+            <tr>
+              <!-- /content/:id 요청 -->
+              <!-- /content/:id 의 파라미터를 _id 값으로 지정 -->
+              <td><a href="/content/<%= data[i]._id %>"><%= data[i].title %></a></td>
+              <td><%= data[i].content %></td>
+              <td><%= data[i].date %></td>
+              <td><button data-id="<%= data[i]._id %>" class="delete btn btn-outline-danger">삭제</button></td>
+            </tr>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
     <!-- 
     <% for(let i = 0; i < data.length; i++){ %>
       <h3>제목 : <%= data[i].title %> </h3>

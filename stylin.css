@@ -30,3 +30,7 @@
     flex-direction: column; 
     width: 300px;
 }
+.listDiv{
+    display: flex;
+    flex-direction: column;
+}

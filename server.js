@@ -23,8 +23,8 @@ con.query('select * from post', function(err, rows, fields){
 
 //MongoClient 객체 생성
 let mongoDBClient = require('mongodb').MongoClient;
+const { ObjectId } = require('mongodb');
 const url = 'mongodb+srv://leesuhyun05505:123412@cluster0.ex8gcx8.mongodb.net/?retryWrites=true&w=majority';
-const ObjId = require('mongodb').ObjectId;
 let mydb;
 
 //mongodb 연결
@@ -49,7 +49,6 @@ mongoDBClient.connect(url).then(client => {
 
 //서버 생성
 const express = require('express');
-const { MongoClient, ObjectId } = require('mongodb');
 
 const app = express();
 //style 경로 지정
@@ -58,6 +57,9 @@ app.use(express.static(__dirname));
 const bodyParser = require('body-parser');
 // URL-encoded 데이터로 파싱하기 위한 미들웨어 등록
 app.use(bodyParser.urlencoded({ extended: true }));
+
+app.use(express.static("public"));
+
 
 
 //ejs 사용
@@ -73,7 +75,7 @@ app.set('views', path.join(__dirname, 'views'));
 //라우터 생성
 //Get 방식으로 서버에 데이터 전송
 app.get('/', function(req, res){
-    res.sendFile(__dirname + '/index.html');
+    res.render('index');
 })
 app.get('/book', function(req, res){
     res.send("도서 목록 관련 페이지");
@@ -178,6 +180,7 @@ app.get('/content/:id', function(req,res){
     })
 })
 
+
 //이건 get방식의 /edit 요청
 app.get('/edit/:id', function(req, res){
 
@@ -188,12 +191,12 @@ app.get('/edit/:id', function(req, res){
     })
 })
 
-//이건 post방식의 /edit 요청
 
+//이건 post방식의 /edit 요청
 app.post('/edit', function(req, res){
 
     console.log(req.body.id);
-    req.body.id = new ObjId(req.body.id);
+    req.body.id = new ObjectId(req.body.id);
 
     console.log(req.body.content);
     //몽고DB에 데이터 저장하기
@@ -202,7 +205,8 @@ app.post('/edit', function(req, res){
         ).then(result => {
             console.log(result);
             console.log('수정완료');
-            res.redirect('/list');
+            //수정하던 상세페이지로 되돌아가게 함.
+            res.redirect('/content/'+ req.body.id);
         })
         .catch(err =>{
             console.log(err);
