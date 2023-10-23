@@ -2,19 +2,30 @@
     padding-left: 100px;
     padding-right: 100px;
 }
+.container_login{
+    margin-top: 100px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+}
 .myForm{
+    margin-top: 100px;
+    background-color: rgb(243, 239, 255);
+    padding: 30px;
+    border-radius: 10px;
     display: flex;
     flex-direction: column;
 }
 .InputTitle{
-    width: 300px;
+    width: 100%;
 }
 .InputTXT{
-    width: 300px;
+    width: 100%;
 }
 .btnSave{
     margin-top: 18px;
-    width: 300px;
+    width: 100%;
     height: 30px;
     border: none;
     background-color: rgb(125, 125, 255);
@@ -23,12 +34,13 @@
 }
 .inputdiv{
     display: flex;
+    width: 100%;
     flex-direction: column;
 }
 .txtdiv{
+    width: 100%;
     display: flex;
     flex-direction: column; 
-    width: 300px;
 }
 .listDiv{
     display: flex;

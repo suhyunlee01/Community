@@ -51,14 +51,15 @@ mongoDBClient.connect(url).then(client => {
 const express = require('express');
 
 const app = express();
+
 //style 경로 지정
 app.use(express.static(__dirname));
-
 const bodyParser = require('body-parser');
 // URL-encoded 데이터로 파싱하기 위한 미들웨어 등록
 app.use(bodyParser.urlencoded({ extended: true }));
 
 app.use(express.static("public"));
+
 
 
 
@@ -70,13 +71,50 @@ const { render } = require('ejs');
 // views 폴더를 설정했을 경우
 app.set('views', path.join(__dirname, 'views'));
 
+// //cookie parser 미들웨어 사용하기
+// let cookieParser = require('cookie-parser');
+// app.use(cookieParser('wegwegwe120249sgsd234234234'));
+
+// //쿠키 연습
+// app.get('/cookie', function(req, res){
+//     //생성된 쿠키값의 value를 정수로 만든 후, 1000씩 올림
+//     let milk = parseInt(req.cookies.milk) + 1000;
+//     //만약 브라우저에 쿠키가 없는 상태라서 값에 undefined가 출력된다면,
+//     //NaN나 undefined로 출력하지 않고 0으로 value를 출력하게 함.
+//     if(isNaN(milk)){
+//         milk = 0;
+//     }
+//     //milk라는 key로 1000원을 저장한다는 의미 //서버에서 쿠키 생성함
+//     res.cookie('milk', milk, {maxAge:2000});
+//     //생성한 쿠키를 클라이언트로 전송하는 것
+//     res.send('product : ' + milk + " 원");
+// })
+
+
+//세션을 초기화하는 미들웨어 위치: router의 앞에 와야 함.
+//세션 연습
+// express-session 미들웨어 추가
+let session = require('express-session');
+app.use(session({
+    //암호를 위한 씨드값
+    secret : 'wegk989egweg676ewg',
+    resave : false,
+    //세션 사용 전까지 세션 식별자를 발급할지 말지 유무(보통은 발급 안함인 true값)
+    saveUninitialized : true,
+
+}));
 
 
 //라우터 생성
 //Get 방식으로 서버에 데이터 전송
 app.get('/', function(req, res){
-    res.render('index');
-})
+    // 세션 객체가 정의되어 있고, 그 안에 user 프로퍼티가 정의되어 있을 때에만 접근
+    if(req.session && req.session.user){
+        res.render('index', { data : req.session.user });
+    } else {
+        res.render('index', { data : null });
+    }
+});
 app.get('/book', function(req, res){
     res.send("도서 목록 관련 페이지");
 })
@@ -212,4 +250,93 @@ app.post('/edit', function(req, res){
             console.log(err);
         })
 
+})
+
+app.get('clear', function(req, res){
+    res.clearCookie('milk');
+    res.send('쿠키 제거 완료');
+})
+
+
+// app.get('/session', function(req,res){
+//     if(isNaN(req.session.milk)){
+//         req.session.milk = 0;
+//     }
+//     req.session.milk += 1000;
+//     res.send("session: " + req.session.milk + "원");
+// })
+
+
+
+//클라이언트에서 받아온 정보 처리
+app.post('/login', function(req, res){
+    console.log(req.body.userid);
+    console.log(req.body.userpw);
+
+    mydb.collection('account').findOne({
+        userid: req.body.userid,
+    }).then(result => {
+        if (result && result.userpw === req.body.userpw) {
+            // 세션에 추가
+            req.session.user = req.body;
+            console.log('로그인', result.userid);
+            res.render('index', { data: result });
+        } else {
+            res.send('로그인 정보가 잘못되었습니다');
+        }
+    }).catch(() => {
+        res.send('데이터 받아오기 실패.');
+    });
+})
+
+
+//서버로부터 페이지 받아오기
+app.get('/login', function(req, res){
+    console.log(req.session);
+    //만약 세션에 user 정보가 있다면 세션유지
+    if(req.session.user){
+        console.log("세션 유지", req.session.user);
+        res.render('index', {data : req.session.user})
+    }else{
+        //없으면 그냥 로그인 페이지 랜더
+        res.render('login.ejs');
+    }
+})
+
+app.get('/myPage', function(req, res){
+    console.log(req.session);
+    //만약 세션에 user 정보가 있다면 세션유지
+    if(req.session.user){
+        res.render('myPage', { data : req.session.user})
+    }else{
+        //없으면 그냥 로그인 페이지 랜더
+        res.send('로그인이 필요합니다.' + ' <a href="/login"><button class="btn btn-outline-success" type="submit">로그인</button></a>');
+    }
+})
+
+app.get('/logout', function(req, res){
+    console.log('로그아웃');
+    req.session.destroy();
+    res.redirect('/');
+})
+
+app.post('/signup', function(req, res){
+    console.log("유저이메일", req.body.useremail);
+    console.log("유저그룹",req.body.usergroup);
+    mydb.collection('account').insertOne(
+        {
+            userid: req.body.userid,
+            userpw: req.body.userpw,
+            useremail: req.body.useremail,
+            usergroup: req.body.usergroup
+        }
+    ).then(result => {
+            console.log(result);
+            res.send('가입완료' + ' <a href="/login"><button class="btn btn-outline-success" type="submit">로그인</button></a>');
+    })
+
+})
+
+app.get('/signup', function(req, res){
+    res.render('signup');
 })
