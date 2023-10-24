@@ -49,14 +49,14 @@ mongoDBClient.connect(url).then(client => {
 const express = require('express');
 
 const app = express();
-
 //style 경로 지정
 app.use(express.static(__dirname));
+app.use(express.static("public"));
+
+
 const bodyParser = require('body-parser');
 // URL-encoded 데이터로 파싱하기 위한 미들웨어 등록
 app.use(bodyParser.urlencoded({ extended: true }));
-
-app.use(express.static("public"));
 
 
 //세션을 초기화하는 미들웨어 위치: router의 앞에 와야 함.
@@ -66,25 +66,22 @@ let session = require('express-session');
 app.use(session({
     //암호를 위한 씨드값
     secret : 'wegk989egweg676ewg',
-    resave : false,
-    //세션 사용 전까지 세션 식별자를 발급할지 말지 유무(보통은 발급 안함인 true값)
-    saveUninitialized : true,
+    resave : false, //세션 데이터가 변경되지 않아도 저장 ? false
+    saveUninitialized : true, //초기화되지 않은 세션 저장.
     
 }));
 
 
 //passport.js
 const passport = require('passport');
-app.use(passport.initialize());
-app.use(passport.session());
+app.use(passport.initialize()); // 이 미들웨어는 Passport 초기화를 처리함
+app.use(passport.session());// 세션관리를 위한 passport 미들웨어임
 
 //server_local.js에는 패스포트 로컬만
 const LocalStrategy = require('passport-local').Strategy;
 
-
 //sha256 해시 함수를 사용하기 위한 모듈
 const sha = require('sha256');
-
 
 //ejs 사용
 const { render } = require('ejs');
@@ -122,13 +119,14 @@ app.set('views', path.join(__dirname, 'views'));
 //라우터 생성
 //Get 방식으로 서버에 데이터 전송
 app.get('/', function(req, res){
-    // 세션 객체가 정의되어 있고, 그 안에 user 프로퍼티가 정의되어 있을 때에만 접근
-    if(req.session && req.session.user){
-        res.render('index', { data : req.session.user });
+    if(req.isAuthenticated()){
+        // Passport.js를 통해 인증된 경우, req.user로 사용자 정보에 접근 가능
+        res.render('index', { data : req.user });
     } else {
         res.render('index', { data : null });
     }
 });
+
 app.get('/book', function(req, res){
     res.send("도서 목록 관련 페이지");
 })
@@ -283,48 +281,50 @@ app.get('clear', function(req, res){
 
 
 //클라이언트에서 받아온 정보 처리
-app.post('/login', function(req, res){
-    console.log(req.body.userid);
-    console.log(req.body.userpw);
+// app.post('/login', function(req, res){
+//     console.log(req.body.userid);
+//     console.log(req.body.userpw);
 
-    mydb.collection('account')
-    .findOne({
-        userid: req.body.userid,
-    }).then(result => {
-        if (result && result.userpw === sha(req.body.userpw)) {
-            // 세션에 추가
-            req.session.user = req.body;
-            console.log('로그인', result.userid);
-            res.render('index', { data: result });
-        } else {
-            res.send('로그인 정보가 잘못되었습니다');
-        }
-    }).catch(() => {
-        res.send('데이터 받아오기 실패.');
-    });
-})
+//     mydb.collection('account')
+//     .findOne({
+//         userid: req.body.userid,
+//     }).then(result => {
+//         if (result && result.userpw === sha(req.body.userpw)) {
+//             // 세션에 추가
+//             req.session.user = req.body;
+//             console.log('로그인', result.userid);
+//             res.render('index', { data: result });
+//         } else {
+//             res.send('로그인 정보가 잘못되었습니다');
+//         }
+//     }).catch(() => {
+//         res.send('데이터 받아오기 실패.');
+//     });
+// })
 
 
-//인자 중 두번째에 패스포트를 통한 인증 미들웨어 넣기
-//패스포트를 통해 인증
+//'/login'경로로 post 요청이 올 시 passport 미들웨어 사용해서 로컬 인증 시도
 app.post('/login', passport.authenticate("local", {
     successRedirect : "/",
     //인증을 패스포트로 하고 실패하면 다시 login 페이지로 이동
     failureRedirect : "/login"
 }),
-function(req, res){
+function(req, res){ //passport 인증 후에 post 메서드의 콜백함수 실행 //셔션
+    //현재 요청과 관련된 세션 객체
     console.log(req.session);
-    console.log(req.session.passport);
+    console.log(req.session.passport); 
 })
 
+//Passport에게 로컬 전략 설정
 passport.use(new LocalStrategy(
     {
+        //사용자가 제출한 아이디와 비밀번호 필드 지정함
         usernameField : "userid",
         passwordField : "userpw",
-        session : true,
-        passReqToCallback : false
+        session : true, // Passport가 세션을 사용하여 사용자 인증 상태를 유지하도록 허용
+        passReqToCallback : false // LocalStrategy의 콜백 함수에 요청(request) 객체를 전달할지 여부
     },
-    function(inputid, inputpw, done){
+    function(inputid, inputpw, done){ //LocalStrategy의 콜백 //실제 인증 수행
         mydb.collection('account')
         .findOne({userid : inputid})
         .then(result => {
@@ -341,13 +341,12 @@ passport.use(new LocalStrategy(
 ))
 
 //serializeUser 함수는  Passport에게 어떻게 사용자 객체를 세션에 저장할지 알려줌
-//콜백 함수의 첫 번째 매개변수 user는 Passport에서 전달된 사용자 객체이다.
+//user는 Passport 인증 전략(local, social 등)을 통해 인증된 사용자 객체이다.
 passport.serializeUser(function(user, done){
     console.log('시리얼라이즈 유저', 'serializerUser');
     console.log('패스포트에서 전달된 사용자객체의 아이디', user.userid);
 
-    //done()메서드가 호출하며 deserializeUser()메서드를 호출한다.
-    //메서드 안의 인자들이 각각 puserid와 done으로 전달된다.
+    //세션에 id 저장
     done(null, user.userid);
 })
 
@@ -356,8 +355,9 @@ passport.deserializeUser(function(puserid, done){
     console.log('deserializerUser');
     console.log(puserid);
 
-    mydb.collection('account').findOne({userid : puserid}).then(result => {
-        console.log(result);
+    mydb.collection('account')
+    .findOne({userid : puserid})
+    .then(result => {
         done(null, result);
     })
 })
@@ -378,8 +378,8 @@ app.get('/login', function(req, res){
 app.get('/myPage', function(req, res){
     console.log(req.session);
     //만약 세션에 user 정보가 있다면 세션유지
-    if(req.session.user){
-        res.render('myPage', { data : req.session.user})
+    if(req.isAuthenticated()){
+        res.render('myPage', { data : req.user})
     }else{
         //없으면 그냥 로그인 페이지 랜더
         res.send('로그인이 필요합니다.' + ' <a href="/login"><button class="btn btn-outline-success" type="submit">로그인</button></a>');
