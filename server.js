@@ -45,8 +45,6 @@ mongoDBClient.connect(url).then(client => {
 })
 
 
-
-
 //서버 생성
 const express = require('express');
 
@@ -61,36 +59,6 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static("public"));
 
 
-
-
-//ejs 사용
-app.set('view engine', 'ejs'); 
-// path 모듈을 가져옴
-const path = require('path');
-const { render } = require('ejs');
-// views 폴더를 설정했을 경우
-app.set('views', path.join(__dirname, 'views'));
-
-// //cookie parser 미들웨어 사용하기
-// let cookieParser = require('cookie-parser');
-// app.use(cookieParser('wegwegwe120249sgsd234234234'));
-
-// //쿠키 연습
-// app.get('/cookie', function(req, res){
-//     //생성된 쿠키값의 value를 정수로 만든 후, 1000씩 올림
-//     let milk = parseInt(req.cookies.milk) + 1000;
-//     //만약 브라우저에 쿠키가 없는 상태라서 값에 undefined가 출력된다면,
-//     //NaN나 undefined로 출력하지 않고 0으로 value를 출력하게 함.
-//     if(isNaN(milk)){
-//         milk = 0;
-//     }
-//     //milk라는 key로 1000원을 저장한다는 의미 //서버에서 쿠키 생성함
-//     res.cookie('milk', milk, {maxAge:2000});
-//     //생성한 쿠키를 클라이언트로 전송하는 것
-//     res.send('product : ' + milk + " 원");
-// })
-
-
 //세션을 초기화하는 미들웨어 위치: router의 앞에 와야 함.
 //세션 연습
 // express-session 미들웨어 추가
@@ -101,8 +69,54 @@ app.use(session({
     resave : false,
     //세션 사용 전까지 세션 식별자를 발급할지 말지 유무(보통은 발급 안함인 true값)
     saveUninitialized : true,
-
+    
 }));
+
+
+//passport.js
+const passport = require('passport');
+app.use(passport.initialize());
+app.use(passport.session());
+
+//server_local.js에는 패스포트 로컬만
+const LocalStrategy = require('passport-local').Strategy;
+
+
+//sha256 해시 함수를 사용하기 위한 모듈
+const sha = require('sha256');
+
+
+//ejs 사용
+const { render } = require('ejs');
+app.set('view engine', 'ejs'); 
+// views 폴더를 설정했을 경우
+
+
+// path 모듈을 가져옴
+const path = require('path');
+app.set('views', path.join(__dirname, 'views'));
+
+
+// //cookie parser 미들웨어 사용하기
+// let cookieParser = require('cookie-parser');
+// app.use(cookieParser('wegwegwe120249sgsd234234234'));
+
+// //쿠키 연습
+// app.get('/cookie', function(req, res){
+    //     //생성된 쿠키값의 value를 정수로 만든 후, 1000씩 올림
+    //     let milk = parseInt(req.cookies.milk) + 1000;
+    //     //만약 브라우저에 쿠키가 없는 상태라서 값에 undefined가 출력된다면,
+    //     //NaN나 undefined로 출력하지 않고 0으로 value를 출력하게 함.
+    //     if(isNaN(milk)){
+        //         milk = 0;
+//     }
+//     //milk라는 key로 1000원을 저장한다는 의미 //서버에서 쿠키 생성함
+//     res.cookie('milk', milk, {maxAge:2000});
+//     //생성한 쿠키를 클라이언트로 전송하는 것
+//     res.send('product : ' + milk + " 원");
+// })
+
+
 
 
 //라우터 생성
@@ -273,10 +287,11 @@ app.post('/login', function(req, res){
     console.log(req.body.userid);
     console.log(req.body.userpw);
 
-    mydb.collection('account').findOne({
+    mydb.collection('account')
+    .findOne({
         userid: req.body.userid,
     }).then(result => {
-        if (result && result.userpw === req.body.userpw) {
+        if (result && result.userpw === sha(req.body.userpw)) {
             // 세션에 추가
             req.session.user = req.body;
             console.log('로그인', result.userid);
@@ -289,6 +304,63 @@ app.post('/login', function(req, res){
     });
 })
 
+
+//인자 중 두번째에 패스포트를 통한 인증 미들웨어 넣기
+//패스포트를 통해 인증
+app.post('/login', passport.authenticate("local", {
+    successRedirect : "/",
+    //인증을 패스포트로 하고 실패하면 다시 login 페이지로 이동
+    failureRedirect : "/login"
+}),
+function(req, res){
+    console.log(req.session);
+    console.log(req.session.passport);
+})
+
+passport.use(new LocalStrategy(
+    {
+        usernameField : "userid",
+        passwordField : "userpw",
+        session : true,
+        passReqToCallback : false
+    },
+    function(inputid, inputpw, done){
+        mydb.collection('account')
+        .findOne({userid : inputid})
+        .then(result => {
+            //만약 DB에 저장된 암호화된 비번과 사용자가 작성해서 submit한 암호화된 비번이 같을 경우
+            if(result.userpw == sha(inputpw)){
+                console.log("로그인 성공. 새로운 로그인");
+                done(null, result);
+            }else{
+                console.log("비밀번호가 일치하지 않습니다.")
+                done(null, false, {message : "비밀번호가 일치하지 않습니다."})
+            }
+        })
+    }
+))
+
+//serializeUser 함수는  Passport에게 어떻게 사용자 객체를 세션에 저장할지 알려줌
+//콜백 함수의 첫 번째 매개변수 user는 Passport에서 전달된 사용자 객체이다.
+passport.serializeUser(function(user, done){
+    console.log('시리얼라이즈 유저', 'serializerUser');
+    console.log('패스포트에서 전달된 사용자객체의 아이디', user.userid);
+
+    //done()메서드가 호출하며 deserializeUser()메서드를 호출한다.
+    //메서드 안의 인자들이 각각 puserid와 done으로 전달된다.
+    done(null, user.userid);
+})
+
+//한 번 로그인 된 이후, 세션유지용 //갖고있는 값으로 id 계속 검사함
+passport.deserializeUser(function(puserid, done){
+    console.log('deserializerUser');
+    console.log(puserid);
+
+    mydb.collection('account').findOne({userid : puserid}).then(result => {
+        console.log(result);
+        done(null, result);
+    })
+})
 
 //서버로부터 페이지 받아오기
 app.get('/login', function(req, res){
@@ -326,7 +398,8 @@ app.post('/signup', function(req, res){
     mydb.collection('account').insertOne(
         {
             userid: req.body.userid,
-            userpw: req.body.userpw,
+            //회원가입 시 암호화해서 비번 DB에 저장
+            userpw: sha(req.body.userpw),
             useremail: req.body.useremail,
             usergroup: req.body.usergroup
         }
