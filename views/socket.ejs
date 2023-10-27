@@ -12,16 +12,41 @@
     <script src="https://cdn.socket.io/4.7.2/socket.io.js"></script>
     <%- include('navbar.html')%>
     <h1>채팅방</h1>
+
+    <!-- 채팅 데이터 출력 -->
+    <div id="content"></div>
+
     <input type="text" id="input1"/>
-    <button id="send" class="btn btn-primary">서버에게 메세지 전송</button>
+    <button id="send" class="btn btn-primary">서버로 메세지 전송</button>
+    <button id="room1">채팅방1 입장</button>
+    <button id="room1-send">(채팅방 1) 메시지 전송</button>
 
     <script>
       var socket = io(); // io 객체를 전역으로 선언
+      
+      //특정 채팅방 클릭 시
+      $('#room1').click(function(){
+        socket.emit('joinRoom', '채팅방 입장 요청이 왔어요!');
+      })
+      //특정 채팅방에만 메시지 전송하기
+      $('#room1-send').click(function(){
+        socket.emit('room1-send', '방 1번');
+      });
+
       $('#send').click(function(){
         //소켓을 통해 서버에 전달하기
         //(이벤트명, 전달하고 싶은 메시지)
         socket.emit('user-send', $('#input1').val());
       });
+      //서버측에서 받아온 메시지 //클라이언트(브라우저) 콘솔에 찍어봄.
+      socket.on ('broadcast', function(data){
+        console.log(data); //성공!
+        //채팅 데이터 출력 div 내에 엘리먼트 생성
+        $('#content').append('<div>' + data + '</div>')
+
+      })
+
+
     </script>
     
   </body>

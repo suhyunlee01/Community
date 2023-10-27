@@ -144,9 +144,27 @@ app.get('/socket', function(req, res){
 
 io.on('connection', function(socket){
     console.log('유저 접속');
+
+    socket.on('room1-send', function(data){
+        //아래 코드에서 join된 소켓에 저장된 room1으로 데이터 보낼 경로 저장
+        io.to('room1').emit('broadcast', data);
+    })
+
+    //joinroom 이벤트를 클라이언트로부터 받으면, room1에 해당 소켓을 join한다.
+    //그럼 room1에 join한 소켓들에게만 데이터가 간다.
+    //따라서 각 브라우저들에서 room1 버튼을 누른 브라우저에만 room1의 메시지를 볼 수 있게 된다.
+    socket.on('joinRoom', function(data){
+        socket.join('room1');
+    })
+
     //emit으로 보낸 메시지 받아오기
     socket.on('user-send', function(data){
         console.log(data);
+        //클라이언트로부터 받아온 데이터 클라이언트로 다시 보내기
+        // io.emit('broadcast', data);
+
+        //소켓의 아이디를 가진 사람에게만 emit 하기
+        io.to(socket.id).emit('broadcast', data);
     })
 });
 
