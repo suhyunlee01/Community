@@ -52,20 +52,6 @@ mongoDBClient.connect(url).then(client => {
 }).catch(err=>{
 })
 
-
-
-//'/login'경로로 post 요청이 올 시 passport 미들웨어 사용해서 로컬 인증 시도
-router.post('/login', passport.authenticate("local", {
-    successRedirect : "/",
-    //인증을 패스포트로 하고 실패하면 다시 login 페이지로 이동
-    failureRedirect : "/login"
-}),
-function(req, res){ //passport 인증 후에 post 메서드의 콜백함수 실행 //셔션
-    //현재 요청과 관련된 세션 객체
-    console.log(req.session);
-    console.log(req.session.passport); 
-})
-
 //Passport에게 로컬 전략 설정
 passport.use(new LocalStrategy(
     {
