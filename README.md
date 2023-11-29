@@ -1,7 +1,7 @@
 # Community
 🎙머리에 자꾸만 맴도는 노래 가사를 마음껏 적고 갈 수 있는 커뮤니티🎙
 
-[노션 페이지 바로가기](https://jewel-woodpecker-781.notion.site/JavaScript_Node-js-ES6-153fa636c23444689197c065bb685aa7?pvs=21)
+[노션 페이지 바로가기](https://www.notion.so/bf869e34832f473aa72f83b209392d5b)
 
 ### 작업 기간
 
